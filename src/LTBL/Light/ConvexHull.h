@@ -19,42 +19,62 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef LIGHT_POINT_H
-#define LIGHT_POINT_H
+#ifndef LTBL_CONVEX_HULL_H
+#define LTBL_CONVEX_HULL_H
 
-#include "Light.h"
-
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <SFML/OpenGL.hpp>
+#include <LTBL/Constructs.h>
+#include <LTBL/QuadTree/QuadTree.h>
+#include <vector>
 
 namespace ltbl
 {
-	extern float lightSubdivisionSize;
+	class ConvexHull :
+		public qdt::QuadTreeOccupant
+	{	
+	private:
+		bool m_aabbCalculated;
 
-	class Light_Point :
-		public Light
-	{
+		Vec2f m_worldCenter;
+
+		bool m_updateRequired;
+
+		bool m_render;
+
+		std::vector<Vec2f> m_normals;
+
 	public:
-		float directionAngle;
-		float spreadAngle;
-		float softSpreadAngle;
+		std::vector<Vec2f> m_vertices;
 
-		Light_Point();
-		~Light_Point();
+		float m_transparency;
+		bool m_renderLightOverHull;
 
-		void SetDirectionAngle(float DirectionAngle);
-		void IncDirectionAngle(float increment);
-		float GetDirectionAngle();
+		ConvexHull();
 
-		void SetSpreadAngle(float SpreadAngle);
-		void IncSpreadAngle(float increment);
-		float GetSpreadAngle();
+		void CenterHull();
+		bool LoadShape(const char* fileName);
+		Vec2f GetWorldVertex(unsigned int index) const;
 
-		// Inherited
-		void RenderLightSolidPortion(float depth);
-		void RenderLightSoftPortion(float depth);
+		void CalculateNormals();
+
+		void RenderHull(float depth);
+
 		void CalculateAABB();
+
+		bool HasCalculatedAABB() const;
+
+		void SetWorldCenter(const Vec2f &newCenter);
+		void IncWorldCenter(const Vec2f &increment);
+
+		Vec2f GetWorldCenter() const;
+
+		bool PointInsideHull(const Vec2f &point);
+
+		void DebugDraw();
+		
+		friend class LightSystem;
 	};
 }
 
 #endif
+

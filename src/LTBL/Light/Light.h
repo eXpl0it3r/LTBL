@@ -19,12 +19,15 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef LTBL_LIGHT_H
+#define LTBL_LIGHT_H
 
-#include "SFML_OpenGL.h"
-#include "Constructs.h"
-#include "QuadTree.h"
+#include <SFML/OpenGL.hpp>
+#include <SFML/Graphics/RenderTexture.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+
+#include <LTBL/Constructs.h>
+#include <LTBL/QuadTree/QuadTree.h>
 
 namespace ltbl
 {
@@ -32,48 +35,48 @@ namespace ltbl
 		public qdt::QuadTreeOccupant
 	{
 	private:
-		sf::RenderTexture* pStaticTexture;
+		sf::RenderTexture* m_pStaticTexture;
 
-		bool alwaysUpdate;
+		bool m_alwaysUpdate;
 
-		sf::RenderWindow* pWin;
+		sf::RenderWindow* m_pWin;
 
 		// Set up viewport information for the render texture
 		void SwitchStaticTexture();
 
-		bool updateRequired;
+		bool m_updateRequired;
 
 	protected:
-		class LightSystem* pLightSystem;
+		class LightSystem* m_pLightSystem;
 
 		// Set to false in base classes in order to avoid shader attenuation
-		bool shaderAttenuation;
+		bool m_shaderAttenuation;
 
 	public:
-		Vec2f center;
-		float intensity;
-		float radius;
-		float size;
+		Vec2f m_center;
+		float m_intensity;
+		float m_radius;
+		float m_size;
 
 		// If using light autenuation shader
-		float bleed;
-		float linearizeFactor;
+		float m_bleed;
+		float m_linearizeFactor;
 
-		Color3f color;
+		Color3f m_color;
 
 		Light();
 		~Light();
 
-		void SetRadius(float Radius);
+		void SetRadius(float radius);
 		void IncRadius(float increment);
 		float GetRadius();
 
-		void SetCenter(Vec2f Center);
+		void SetCenter(Vec2f center);
 		void IncCenter(Vec2f increment);
 		Vec2f GetCenter();
 
-		virtual void RenderLightSolidPortion(float depth) = 0;
-		virtual void RenderLightSoftPortion(float depth) = 0;
+		virtual void RenderLightSolidPortion() = 0;
+		virtual void RenderLightSoftPortion() = 0;
 		virtual void CalculateAABB();
 		AABB* GetAABB();
 

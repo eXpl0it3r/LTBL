@@ -19,43 +19,28 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef QUADTREE_H
-#define QUADTREE_H
+#ifndef LTBL_SHADOWFIN_H
+#define LTBL_SHADOWFIN_H
 
-#include "QuadTreeNode.h"
-#include "QuadTreeOccupant.h"
+#include <SFML/OpenGL.hpp>
+#include <LTBL/Constructs/Vec2f.h>
 
-#include <unordered_set>
-
-using namespace ltbl;
-
-namespace qdt
+namespace ltbl
 {
-	class QuadTree
+	class ShadowFin
 	{
-	private:
-		std::unordered_set<QuadTreeOccupant*> outsideRoot;
-
-		QuadTreeNode* rootNode;
-
 	public:
-		QuadTree(const AABB &startRegion);
-		~QuadTree();
+		Vec2f m_rootPos;
+		Vec2f m_umbra;
+		Vec2f m_penumbra;
 
-		void AddOccupant(QuadTreeOccupant* pOc);
-		void ClearTree(const AABB &newStartRegion);
+		float m_umbraBrightness;
+		float m_penumbraBrightness;
 
-		void Query(const AABB &queryRegion, std::vector<QuadTreeOccupant*> &queryResult);
-		void QueryToDepth(const AABB &queryRegion, std::vector<QuadTreeOccupant*> &queryResult, int depth);
+		ShadowFin();
+		~ShadowFin();
 
-		unsigned int GetNumOccupants();
-
-		AABB GetRootAABB();
-
-		void DebugRender();
-
-		friend class QuadTreeNode;
-		friend class QuadTreeOccupant;
+		void Render(float transparency);
 	};
 }
 

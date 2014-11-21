@@ -19,43 +19,38 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef EMISSIVELIGHT_H
-#define EMISSIVELIGHT_H
+#ifndef LTBL_LIGHT_POINT_H
+#define LTBL_LIGHT_POINT_H
 
-#include "QuadTree.h"
-#include "SFML_OpenGL.h"
+#include <LTBL/Light/Light.h>
 
 namespace ltbl
 {
-	class EmissiveLight :
-		public qdt::QuadTreeOccupant
+	class Light_Point :
+		public Light
 	{
-	private:
-		sf::Texture* text;
-
-		float angleDegs;
-
-		Vec2f halfRenderDims;
-
 	public:
-		float intensity;
+		float m_directionAngle;
+		float m_spreadAngle;
+		float m_softSpreadAngle;
 
-		Color3f color;
+		float m_lightSubdivisionSize;
 
-		EmissiveLight();
+		Light_Point();
+		~Light_Point();
 
-		void SetTexture(sf::Texture* texture);
-		void Render();
+		void SetDirectionAngle(float directionAngle);
+		void IncDirectionAngle(float increment);
+		float GetDirectionAngle();
 
-		void SetCenter(const Vec2f &newCenter);
-		void SetDims(const Vec2f &newScale);
-		void IncCenter(const Vec2f &increment);
-		void SetRotation(float angle);
-		void IncRotation(float increment);
+		void SetSpreadAngle(float spreadAngle);
+		void IncSpreadAngle(float increment);
+		float GetSpreadAngle();
 
-		Vec2f GetCenter();
-		Vec2f GetDims();
-		float GetAngle();
+		// Inherited
+		void RenderLightSolidPortion();
+		void RenderLightSoftPortion();
+		void CalculateAABB();
 	};
 }
 

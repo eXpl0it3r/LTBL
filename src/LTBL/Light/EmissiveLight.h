@@ -19,28 +19,46 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef SHADOWFIN_H
-#define SHADOWFIN_H
+#ifndef LTBL_EMISSIVELIGHT_H
+#define LTBL_EMISSIVELIGHT_H
 
-#include "SFML_OpenGL.h"
-#include "Constructs.h"
+#include <LTBL/QuadTree/QuadTree.h>
+#include <LTBL/Constructs/Color3f.h>
+
+#include <SFML/OpenGL.hpp>
+#include <SFML/Graphics/Texture.hpp>
 
 namespace ltbl
 {
-	class ShadowFin
+	class EmissiveLight :
+		public qdt::QuadTreeOccupant
 	{
+	private:
+		sf::Texture* m_texture;
+
+		float m_angleDegs;
+
+		Vec2f m_halfRenderDims;
+
 	public:
-		Vec2f rootPos;
-		Vec2f umbra;
-		Vec2f penumbra;
+		float m_intensity;
 
-		float umbraBrightness;
-		float penumbraBrightness;
+		Color3f m_color;
 
-		ShadowFin();
-		~ShadowFin();
+		EmissiveLight();
 
-		void Render(float depth);
+		void SetTexture(sf::Texture* texture);
+		void Render();
+
+		void SetCenter(const Vec2f &newCenter);
+		void SetDims(const Vec2f &newScale);
+		void IncCenter(const Vec2f &increment);
+		void SetRotation(float angle);
+		void IncRotation(float increment);
+
+		Vec2f GetCenter();
+		Vec2f GetDims();
+		float GetAngle();
 	};
 }
 

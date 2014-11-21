@@ -19,143 +19,142 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "EmissiveLight.h"
+#include <LTBL/Light/EmissiveLight.h>
+
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 
 using namespace ltbl;
-using namespace qdt;
 
 EmissiveLight::EmissiveLight()
-	: angleDegs(0.0f), color(1.0f, 1.0f, 1.0f), intensity(1.0f)
+	: m_angleDegs(0.0f), m_color(1.0f, 1.0f, 1.0f), m_intensity(1.0f)
 {
 }
 
 void EmissiveLight::SetTexture(sf::Texture* texture)
 {
-	text = texture;
+	m_texture = texture;
 
 	// Update aabb and the render dims
-	halfRenderDims.x = static_cast<float>(text->GetWidth()) / 2.0f;
-	halfRenderDims.y = static_cast<float>(text->GetHeight()) / 2.0f;
+	sf::Vector2u textureSize(m_texture->getSize());
+	m_halfRenderDims.x = static_cast<float>(textureSize.x) / 2.0f;
+	m_halfRenderDims.y = static_cast<float>(textureSize.y) / 2.0f;
 
-	aabb.SetHalfDims(halfRenderDims);
+	m_aabb.SetHalfDims(m_halfRenderDims);
 
-	aabb.CalculateHalfDims();
-	aabb.CalculateCenter();
+	m_aabb.CalculateHalfDims();
+	m_aabb.CalculateCenter();
 
-	UpdateTreeStatus();
+	TreeUpdate();
 }
 
 void EmissiveLight::Render()
 {
 	glPushMatrix();
 
-	const Vec2f &center = aabb.GetCenter();
+	const Vec2f &center = m_aabb.GetCenter();
 
-	text->Bind();
+	m_texture->bind();
 
 	glTranslatef(center.x, center.y, 0.0f);
-	glRotatef(angleDegs, 0.0f, 0.0f, 1.0f);
+	glRotatef(m_angleDegs, 0.0f, 0.0f, 1.0f);
 
 	// Clamp the intensity
-	float renderIntensity = intensity;
+	float renderIntensity = m_intensity;
 
 	if(renderIntensity > 1.0f)
 		renderIntensity = 1.0f;
 
-	glColor4f(color.r, color.g, color.b, renderIntensity);
+	glColor4f(m_color.r, m_color.g, m_color.b, renderIntensity);
 
 	// Have to render upside-down because SFML loads the Textures upside-down
 	glBegin(GL_QUADS);
-		glTexCoord2i(0, 0); glVertex3f(-halfRenderDims.x, -halfRenderDims.y, 0.0f);
-		glTexCoord2i(1, 0); glVertex3f(halfRenderDims.x, -halfRenderDims.y, 0.0f);
-		glTexCoord2i(1, 1); glVertex3f(halfRenderDims.x, halfRenderDims.y, 0.0f);
-		glTexCoord2i(0, 1); glVertex3f(-halfRenderDims.x, halfRenderDims.y, 0.0f);
+		glTexCoord2i(0, 0); glVertex2f(-m_halfRenderDims.x, -m_halfRenderDims.y);
+		glTexCoord2i(1, 0); glVertex2f(m_halfRenderDims.x, -m_halfRenderDims.y);
+		glTexCoord2i(1, 1); glVertex2f(m_halfRenderDims.x, m_halfRenderDims.y);
+		glTexCoord2i(0, 1); glVertex2f(-m_halfRenderDims.x, m_halfRenderDims.y);
 	glEnd();
 
 	// Reset color
 	glColor3f(1.0f,	1.0f, 1.0f);
-
-	DrawQuad(*text);
 
 	glPopMatrix();
 }
 
 void EmissiveLight::SetCenter(const Vec2f &newCenter)
 {
-	aabb.SetCenter(newCenter);
-	UpdateTreeStatus();
+	m_aabb.SetCenter(newCenter);
+	TreeUpdate();
 }
 
 void EmissiveLight::IncCenter(const Vec2f &increment)
 {
-	aabb.IncCenter(increment);
-	UpdateTreeStatus();
+	m_aabb.IncCenter(increment);
+	TreeUpdate();
 }
 
 void EmissiveLight::SetDims(const Vec2f &newDims)
 {
-	halfRenderDims = newDims / 2.0f;
+	m_halfRenderDims = newDims / 2.0f;
 
 	// Set AABB
-	aabb.SetHalfDims(halfRenderDims);
+	m_aabb.SetHalfDims(m_halfRenderDims);
 	
 	// Re-rotate AABB if it is rotated
-	if(angleDegs != 0.0f)
-		SetRotation(angleDegs);
+	if(m_angleDegs != 0.0f)
+		SetRotation(m_angleDegs);
 
-	UpdateTreeStatus();
+	TreeUpdate();
 }
 
 void EmissiveLight::SetRotation(float angle)
 {
 	// Update the render angle (convert to degrees)
-	angleDegs = angle;
+	m_angleDegs = angle;
 
 	// Get original AABB
-	aabb.SetHalfDims(halfRenderDims);
+	m_aabb.SetHalfDims(m_halfRenderDims);
 
-	aabb.CalculateHalfDims();
-	aabb.CalculateCenter();
+	m_aabb.CalculateHalfDims();
+	m_aabb.CalculateCenter();
 
 	// If angle is the normal angle, exit
-	if(angleDegs == 0.0f)
+	if(m_angleDegs == 0.0f)
 		return;
 
 	// Get angle in radians
-	float angleRads = angleDegs * (static_cast<float>(M_PI) / 180.0f);
+	float angleRads = m_angleDegs * (static_cast<float>(M_PI) / 180.0f);
 
 	// Rotate the aabb
-	aabb.SetRotatedAABB(angleRads);
+	m_aabb.SetRotatedAABB(angleRads);
 
-	UpdateTreeStatus();
+	TreeUpdate();
 }
 
 void EmissiveLight::IncRotation(float increment)
 {
 	// Increment render angle
-	angleDegs += increment;
+	m_angleDegs += increment;
 
 	// Get angle increment in radians
 	float incrementRads = increment * (static_cast<float>(M_PI) / 180.0f);
 
 	// Rotate the aabb without setting to original aabb, so rotation is relative
-	aabb.SetRotatedAABB(incrementRads);
+	m_aabb.SetRotatedAABB(incrementRads);
 }
 
 Vec2f EmissiveLight::GetDims()
 {
-	return aabb.GetDims();
+	return m_aabb.GetDims();
 }
 
 Vec2f EmissiveLight::GetCenter()
 {
-	return aabb.GetCenter();
+	return m_aabb.GetCenter();
 }
 
 float EmissiveLight::GetAngle()
 {
-	return angleDegs;
+	return m_angleDegs;
 }

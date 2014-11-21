@@ -19,69 +19,64 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef LIGHTSYSTEM_H
-#define LIGHTSYSTEM_H
+#ifndef LTBL_LIGHTSYSTEM_H
+#define LTBL_LIGHTSYSTEM_H
 
-#include "Light.h"
-#include "EmissiveLight.h"
-#include "ConvexHull.h"
-#include "ShadowFin.h"
-#include "SFML_OpenGL.h"
-#include "Constructs.h"
+#include <SFML/OpenGL.hpp>
+#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/RenderTexture.hpp>
+#include <SFML/Graphics/Shader.hpp>
+
+#include <LTBL/QuadTree/StaticQuadTree.h>
+#include <LTBL/Light/Light.h>
+#include <LTBL/Light/EmissiveLight.h>
+#include <LTBL/Light/ConvexHull.h>
+#include <LTBL/Light/ShadowFin.h>
+#include <LTBL/Constructs.h>
+
 #include <unordered_set>
 #include <vector>
 
 namespace ltbl
 {
-	// The radius value of a light is larger than what one actually 
-	// sees in the render of the light. Therefore, this multiplier 
-	// can be used to "cut down" the radius a bit more for more culling.
-	const float lightRadiusCullMultiplier = 1.0f;
-	const float renderDepth = 50.0f;
-
-	const int maxFins = 1;
-
 	class LightSystem
 	{
 	private:
-		sf::RenderWindow* pWin;
+		sf::RenderWindow* m_pWin;
 
-		std::unordered_set<Light*> lights;
+		std::unordered_set<Light*> m_lights;
 	
-		std::unordered_set<EmissiveLight*> emissiveLights;
+		std::unordered_set<EmissiveLight*> m_emissiveLights;
 
-		std::unordered_set<ConvexHull*> convexHulls;
+		std::unordered_set<ConvexHull*> m_convexHulls;
 
-		std::vector<Light*> lightsToPreBuild;
+		std::vector<Light*> m_lightsToPreBuild;
 
-		std::unique_ptr<qdt::QuadTree> lightTree;
-		std::unique_ptr<qdt::QuadTree> hullTree;
-		std::unique_ptr<qdt::QuadTree> emissiveTree;
+		qdt::StaticQuadTree m_lightTree;
+		qdt::StaticQuadTree m_hullTree;
+		qdt::StaticQuadTree m_emissiveTree;
 
-		sf::RenderTexture renderTexture;
-		sf::RenderTexture lightTemp;
-		sf::RenderTexture bloomTexture;
+		sf::RenderTexture m_compositionTexture;
+		sf::RenderTexture m_lightTempTexture;
+		sf::RenderTexture m_bloomTexture;
 
-		sf::Shader lightAttenuationShader;
+		sf::Shader m_lightAttenuationShader;
 
-		std::vector<ShadowFin> finsToRender_firstBoundary;
-		std::vector<ShadowFin> finsToRender_secondBoundary;
+		sf::Texture m_softShadowTexture;
 
-		sf::Texture softShadowTexture;
-
-		int prebuildTimer;
+		int m_prebuildTimer;
 
 		void MaskShadow(Light* light, ConvexHull* convexHull, bool minPoly, float depth);
 
 		// Returns number of fins added
-		int AddExtraFins(const ConvexHull &hull, std::vector<ShadowFin> &fins, const Light &light, int boundryIndex, bool wrapCW);
+		int AddExtraFins(const ConvexHull &hull, std::vector<ShadowFin> &fins, const Light &light, int boundryIndex, bool wrapCW, Vec2f &mainUmbraRoot, Vec2f &mainUmbraVec);
 
 		void CameraSetup();
 		void SetUp(const AABB &region);
 
 		// Switching between render textures
 		void SwitchLightTemp();
-		void SwitchMain();
+		void SwitchComposition();
 		void SwitchBloom();
 		void SwitchWindow();
 
@@ -89,18 +84,26 @@ namespace ltbl
 
 		enum CurrentRenderTexture
 		{
-			cur_lightTemp, cur_main, cur_bloom, cur_window, cur_lightStatic
-		} currentRenderTexture;
+			cur_lightTemp, cur_shadow, cur_main, cur_bloom, cur_window, cur_lightStatic
+		} m_currentRenderTexture;
+
+		void ClearLightTexture(sf::RenderTexture &renTex);
 
 	public:
-		AABB viewAABB;
-		sf::Color ambientColor;
-		bool checkForHullIntersect;
+		AABB m_viewAABB;
 
-		bool useBloom;
+		sf::Color m_ambientColor;
 
+		bool m_checkForHullIntersect;
+		bool m_useBloom;
+
+		unsigned int m_maxFins;
+
+		LightSystem();
 		LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow, const std::string &finImagePath, const std::string &lightAttenuationShaderPath);
 		~LightSystem();
+
+		void Create(const AABB &region, sf::RenderWindow* pRenderWindow, const std::string &finImagePath, const std::string &lightAttenuationShaderPath);
 
 		void SetView(const sf::View &view);
 
@@ -123,7 +126,7 @@ namespace ltbl
 		// Renders lights to the light texture
 		void RenderLights();
 
-		void RenderLightTexture(float renderDepth = 0.0f);
+		void RenderLightTexture();
 
 		void DebugRender();
 	};
