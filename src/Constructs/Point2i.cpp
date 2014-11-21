@@ -24,5 +24,3 @@ bool Point2i::operator!=(const Point2i &other) const
 
 	return false;
 }
-
-
