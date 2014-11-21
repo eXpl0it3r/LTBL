@@ -64,6 +64,8 @@ namespace ltbl
 	public:
 		std::vector<ConvexHullVertex> vertices;
 
+		bool renderLightOverHull;
+
 		ConvexHull();
 
 		void CenterHull();

@@ -86,7 +86,7 @@ void QuadTreeNode::GetOccupants(std::vector<QuadTreeOccupant*> &queryResult)
 void QuadTreeNode::Partition()
 {
 	// Create the children nodes with the appropriate bounds set
-	Vec2f halfWidth = region.GetDims() / 2.0f;
+	Vec2f halfWidth = region.GetHalfDims();
 
 	const unsigned int nextLevel = level + 1;
 

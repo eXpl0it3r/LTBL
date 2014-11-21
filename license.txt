@@ -22,4 +22,3 @@ freely, subject to the following restrictions:
 Let There Be Light uses the following external libraries:
 
 SFML - source code is licensed under the zlib/png license.
-GLEW - source code is licensed under the Modified BSD License, the Mesa 3-D License (MIT License), and the Khronos License (MIT License).

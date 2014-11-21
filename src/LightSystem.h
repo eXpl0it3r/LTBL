@@ -39,7 +39,7 @@ namespace ltbl
 	const float lightRadiusCullMultiplier = 1.0f;
 	const float renderDepth = 50.0f;
 
-	const int maxFins = 2;
+	const int maxFins = 1;
 
 	class LightSystem
 	{
@@ -64,14 +64,18 @@ namespace ltbl
 
 		sf::Shader lightAttenuationShader;
 
-		std::vector<ShadowFin> finsToRender;
+		std::vector<ShadowFin> finsToRender_firstBoundary;
+		std::vector<ShadowFin> finsToRender_secondBoundary;
 
 		sf::Texture softShadowTexture;
 
 		int prebuildTimer;
 
-		void MaskShadow(Light* light, ConvexHull* convexHull, float depth);
-		void AddExtraFins(const ConvexHull &hull, ShadowFin* fin, const Light &light, Vec2f &mainUmbra, Vec2f &mainUmbraRoot, int boundryIndex, bool wrapCW);
+		void MaskShadow(Light* light, ConvexHull* convexHull, bool minPoly, float depth);
+
+		// Returns number of fins added
+		int AddExtraFins(const ConvexHull &hull, std::vector<ShadowFin> &fins, const Light &light, int boundryIndex, bool wrapCW);
+
 		void CameraSetup();
 		void SetUp(const AABB &region);
 
@@ -95,7 +99,7 @@ namespace ltbl
 
 		bool useBloom;
 
-		LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow);
+		LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow, const std::string &finImagePath, const std::string &lightAttenuationShaderPath);
 		~LightSystem();
 
 		void SetView(const sf::View &view);

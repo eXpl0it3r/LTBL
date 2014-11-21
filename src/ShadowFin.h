@@ -34,6 +34,9 @@ namespace ltbl
 		Vec2f umbra;
 		Vec2f penumbra;
 
+		float umbraBrightness;
+		float penumbraBrightness;
+
 		ShadowFin();
 		~ShadowFin();
 

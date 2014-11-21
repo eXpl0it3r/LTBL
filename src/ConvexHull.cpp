@@ -32,7 +32,8 @@ using namespace qdt;
 ConvexHull::ConvexHull()
 	: worldCenter(0.0f, 0.0f),
 	aabbGenerated(false),
-	updateRequired(true) // Remains true permanently unless user purposely changes it
+	updateRequired(true), // Remains true permanently unless user purposely changes it
+	renderLightOverHull(true)
 {
 }
 
@@ -121,6 +122,9 @@ void ConvexHull::CalculateNormals()
 
 void ConvexHull::RenderHull(float depth)
 {
+	if(renderLightOverHull)
+		return;
+
 	glBegin(GL_TRIANGLE_FAN);
 
 	const unsigned int numVertices = vertices.size();

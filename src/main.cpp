@@ -54,11 +54,11 @@ int main(int argc, char* args[])
 	backgroundImage.SetRepeated(true);
 
 	sf::Sprite backgroundSprite(backgroundImage);
-	backgroundSprite.SetTextureRect(sf::IntRect(0, 0, vidMode.Width, vidMode.Height));
+	backgroundSprite.SetTextureRect(sf::IntRect(0, 0, vidMode.Width * 2, vidMode.Height * 2));
 
 	// --------------------- Light System Setup ---------------------
 
-	ltbl::LightSystem ls(AABB(Vec2f(0.0f, 0.0f), Vec2f(static_cast<float>(vidMode.Width), static_cast<float>(vidMode.Height))), &win);
+	ltbl::LightSystem ls(AABB(Vec2f(0.0f, 0.0f), Vec2f(static_cast<float>(vidMode.Width), static_cast<float>(vidMode.Height))), &win, "data/lightFin.png", "data/shaders/lightAttenuationShader.frag");
 
 	// Create a light
 	ltbl::Light_Point* testLight = new ltbl::Light_Point();
@@ -75,7 +75,7 @@ int main(int argc, char* args[])
 
 	ls.AddLight(testLight);
 
-	testLight->SetAlwaysUpdate(true);
+	testLight->SetAlwaysUpdate(false);
 
 	// Create a light
 	ltbl::Light_Point* testLight2 = new ltbl::Light_Point();
@@ -150,7 +150,7 @@ int main(int argc, char* args[])
 			view.Move(sf::Vector2f(0.0f, 1.0f));
 
 		sf::Vector2i mousePos = sf::Mouse::GetPosition(win);
-
+		//testLight2->IncCenter(ltbl::Vec2f(0.1f, 0.0f));
 		// Update light
 		testLight->SetCenter(Vec2f(static_cast<float>(mousePos.x), static_cast<float>(vidMode.Height) - static_cast<float>(mousePos.y)));
 

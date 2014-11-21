@@ -25,24 +25,6 @@
 
 namespace ltbl
 {
-	bool glewInitialized = false;
-
-	void InitGlew()
-	{
-		if(glewInitialized)
-			return;
-
-		GLenum err = glewInit();
-
-		if(GLEW_OK != err)
-		{
-			std::cout << "Could not initialize GLEW! Aborting..." << std::endl;
-			abort();
-		}
-
-		glewInitialized = true;
-	}
-
 	void DrawQuad(sf::Texture &Texture)
 	{
 		float halfWidth = Texture.GetWidth() / 2.0f;

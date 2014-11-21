@@ -24,6 +24,7 @@
 using namespace ltbl;
 
 ShadowFin::ShadowFin()
+	: umbraBrightness(1.0f), penumbraBrightness(1.0f)
 {
 }
 
@@ -33,9 +34,34 @@ ShadowFin::~ShadowFin()
 
 void ShadowFin::Render(float depth)
 {
-	glBegin(GL_TRIANGLES);
-		glTexCoord2i(0, 1); glVertex3f(rootPos.x, rootPos.y, depth);
-		glTexCoord2i(0, 0); glVertex3f(rootPos.x + penumbra.x, rootPos.y + penumbra.y, depth);
-		glTexCoord2i(1, 0); glVertex3f(rootPos.x + umbra.x, rootPos.y + umbra.y, depth);
-	glEnd();
+	if(penumbraBrightness != 1.0f)
+	{
+		glColor4f(1.0f, 1.0f, 1.0f, penumbraBrightness);
+	
+		glBlendFunc(GL_ZERO, GL_SRC_ALPHA);
+
+		glBegin(GL_TRIANGLES);
+			glTexCoord2i(0, 1); glVertex3f(rootPos.x, rootPos.y, depth);
+			glTexCoord2i(1, 0); glVertex3f(rootPos.x + penumbra.x, rootPos.y + penumbra.y, depth);
+			glTexCoord2i(0, 0); glVertex3f(rootPos.x + umbra.x, rootPos.y + umbra.y, depth);
+		glEnd();
+	}
+	else
+	{
+		if(umbraBrightness != 1.0f)
+		{
+			float brightness = 1.0f - umbraBrightness;
+			glColor4f(1.0f, 1.0f, 1.0f, brightness);
+		}
+
+		glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+
+		glBegin(GL_TRIANGLES);
+			glTexCoord2i(0, 1); glVertex3f(rootPos.x, rootPos.y, depth);
+			glTexCoord2i(0, 0); glVertex3f(rootPos.x + penumbra.x, rootPos.y + penumbra.y, depth);
+			glTexCoord2i(1, 0); glVertex3f(rootPos.x + umbra.x, rootPos.y + umbra.y, depth);
+		glEnd();
+	}
+	
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
