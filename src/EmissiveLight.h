@@ -38,6 +38,8 @@ namespace ltbl
 		Vec2f halfRenderDims;
 
 	public:
+		float intensity;
+
 		Color3f color;
 
 		EmissiveLight();

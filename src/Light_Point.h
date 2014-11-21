@@ -19,28 +19,38 @@
 	3. This notice may not be removed or altered from any source distribution.
 */
 
-#ifndef LIGHT_BEAM_H
-#define LIGHT_BEAM_H
+#ifndef LIGHT_POINT_H
+#define LIGHT_POINT_H
 
 #include "Light.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 namespace ltbl
 {
-	class Light_Beam :
+	extern float lightSubdivisionSize;
+
+	class Light_Point :
 		public Light
 	{
-	private:
-		Vec2f innerPoint1, innerPoint2, outerPoint1, outerPoint2;
 	public:
-		float width;
+		float directionAngle;
+		float spreadAngle;
+		float softSpreadAngle;
 
-		Light_Beam();
-		~Light_Beam();
+		Light_Point();
+		~Light_Point();
 
-		void SetCenter(const Vec2f &newCenter);
-		void UpdateDirectionAngle();
+		void SetDirectionAngle(float DirectionAngle);
+		void IncDirectionAngle(float increment);
+		float GetDirectionAngle();
 
-		// Overloaded from Light
+		void SetSpreadAngle(float SpreadAngle);
+		void IncSpreadAngle(float increment);
+		float GetSpreadAngle();
+
+		// Inherited
 		void RenderLightSolidPortion(float depth);
 		void RenderLightSoftPortion(float depth);
 		void CalculateAABB();

@@ -217,6 +217,18 @@ bool ConvexHull::PointInsideHull(const Vec2f &point)
 	return true;
 }
 
+void ConvexHull::DebugDraw()
+{
+	const unsigned int numVertices = vertices.size();
+
+	glTranslatef(worldCenter.x, worldCenter.y, 0.0f);
+
+	glBegin(GL_LINE_LOOP);
+
+	for(unsigned int i = 0; i < numVertices; i++)
+		glVertex3f(vertices[i].position.x, vertices[i].position.y, 0.0f);
+}
+
 float ltbl::GetFloatVal(std::string strConvert)
 {
 	return static_cast<float>(atof(strConvert.c_str()));

@@ -60,6 +60,9 @@ namespace ltbl
 
 		sf::RenderTexture renderTexture;
 		sf::RenderTexture lightTemp;
+		sf::RenderTexture bloomTexture;
+
+		sf::Shader lightAttenuationShader;
 
 		std::vector<ShadowFin> finsToRender;
 
@@ -75,15 +78,27 @@ namespace ltbl
 		// Switching between render textures
 		void SwitchLightTemp();
 		void SwitchMain();
+		void SwitchBloom();
 		void SwitchWindow();
 
+		void SwitchWindowProjection();
+
+		enum CurrentRenderTexture
+		{
+			cur_lightTemp, cur_main, cur_bloom, cur_window, cur_lightStatic
+		} currentRenderTexture;
+
 	public:
-		sf::View view;
+		AABB viewAABB;
 		sf::Color ambientColor;
 		bool checkForHullIntersect;
 
+		bool useBloom;
+
 		LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow);
 		~LightSystem();
+
+		void SetView(const sf::View &view);
 
 		// All objects are controller through pointer, but these functions return indices that allow easy removal
 		void AddLight(Light* newLight);

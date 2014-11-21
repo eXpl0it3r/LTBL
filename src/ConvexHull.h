@@ -84,6 +84,8 @@ namespace ltbl
 		Vec2f GetWorldCenter() const;
 
 		bool PointInsideHull(const Vec2f &point);
+
+		void DebugDraw();
 		
 		friend class LightSystem;
 	};

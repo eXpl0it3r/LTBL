@@ -21,9 +21,13 @@
 
 #include "LightSystem.h"
 
+#include "Light_Point.h"
+
 #include <assert.h>
 
 #include <SFML/Graphics.hpp>
+
+#include <sstream>
 
 int main(int argc, char* args[])
 { 
@@ -35,6 +39,10 @@ int main(int argc, char* args[])
 
 	sf::RenderWindow win;
 	win.Create(vidMode, "Let there be Light - Demo");
+
+	sf::View view;
+	view.SetSize(sf::Vector2f((float)win.GetWidth(), (float)win.GetHeight()));
+	view.SetCenter(view.GetSize() / 2.0f);
 
 	// ---------------------- Background Image ---------------------
 
@@ -53,24 +61,29 @@ int main(int argc, char* args[])
 	ltbl::LightSystem ls(AABB(Vec2f(0.0f, 0.0f), Vec2f(static_cast<float>(vidMode.Width), static_cast<float>(vidMode.Height))), &win);
 
 	// Create a light
-	ltbl::Light* testLight = new ltbl::Light();
+	ltbl::Light_Point* testLight = new ltbl::Light_Point();
+	testLight->intensity = 2.0f;
 	testLight->center = Vec2f(200.0f, 200.0f);
-	testLight->radius = 500.0f;
-	testLight->size = 30.0f;
+	testLight->radius = 600.0f;
+	testLight->size = 15.0f;
 	testLight->spreadAngle = 2.0f * static_cast<float>(M_PI);
 	testLight->softSpreadAngle = 0.0f;
 	testLight->CalculateAABB();
 
+	testLight->bleed = 0.4f;
+	testLight->linearizeFactor = 0.2f;
+
 	ls.AddLight(testLight);
 
-	testLight->SetAlwaysUpdate(false);
+	testLight->SetAlwaysUpdate(true);
 
 	// Create a light
-	ltbl::Light* testLight2 = new ltbl::Light();
+	ltbl::Light_Point* testLight2 = new ltbl::Light_Point();
 	testLight2->center = Vec2f(200.0f, 200.0f);
 	testLight2->radius = 500.0f;
 	testLight2->size = 30.0f;
 	testLight2->color.r = 0.5f;
+	testLight2->intensity = 1.5f;
 	testLight2->spreadAngle = 2.0f * static_cast<float>(M_PI);
 	testLight2->softSpreadAngle = 0.0f;
 	testLight2->CalculateAABB();
@@ -90,6 +103,8 @@ int main(int argc, char* args[])
 	emissiveLight->SetTexture(&text);
 
 	emissiveLight->SetRotation(45.0f);
+
+	emissiveLight->intensity = 1.3f;
 
 	ls.AddEmissiveLight(emissiveLight);
 
@@ -124,12 +139,25 @@ int main(int argc, char* args[])
 				break;
 			}
 
+		if(sf::Keyboard::IsKeyPressed(sf::Keyboard::A))
+			view.Move(sf::Vector2f(-1.0f, 0.0f));
+		else if(sf::Keyboard::IsKeyPressed(sf::Keyboard::D))
+			view.Move(sf::Vector2f(1.0f, 0.0f));
+
+		if(sf::Keyboard::IsKeyPressed(sf::Keyboard::W))
+			view.Move(sf::Vector2f(0.0f, -1.0f));
+		else if(sf::Keyboard::IsKeyPressed(sf::Keyboard::S))
+			view.Move(sf::Vector2f(0.0f, 1.0f));
+
 		sf::Vector2i mousePos = sf::Mouse::GetPosition(win);
 
 		// Update light
-		testLight->SetCenter(Vec2f(static_cast<float>(mousePos.x), static_cast<float>(vidMode.Height - mousePos.y)));
+		testLight->SetCenter(Vec2f(static_cast<float>(mousePos.x), static_cast<float>(vidMode.Height) - static_cast<float>(mousePos.y)));
 
 		win.Clear();
+
+		win.SetView(view);
+		ls.SetView(view);
 
 		// Draw the background
 		win.Draw(backgroundSprite);
@@ -140,7 +168,7 @@ int main(int argc, char* args[])
 		// Draw the lights
 		ls.RenderLightTexture();
 
-		ls.DebugRender();
+		//ls.DebugRender();
 
 		win.Display();
 	}

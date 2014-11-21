@@ -28,7 +28,7 @@ using namespace ltbl;
 using namespace qdt;
 
 EmissiveLight::EmissiveLight()
-	: angleDegs(0.0f), color(1.0f, 1.0f, 1.0f)
+	: angleDegs(0.0f), color(1.0f, 1.0f, 1.0f), intensity(1.0f)
 {
 }
 
@@ -59,7 +59,13 @@ void EmissiveLight::Render()
 	glTranslatef(center.x, center.y, 0.0f);
 	glRotatef(angleDegs, 0.0f, 0.0f, 1.0f);
 
-	glColor3f(color.r, color.g, color.b);
+	// Clamp the intensity
+	float renderIntensity = intensity;
+
+	if(renderIntensity > 1.0f)
+		renderIntensity = 1.0f;
+
+	glColor4f(color.r, color.g, color.b, renderIntensity);
 
 	// Have to render upside-down because SFML loads the Textures upside-down
 	glBegin(GL_QUADS);

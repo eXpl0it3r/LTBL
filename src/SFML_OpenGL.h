@@ -26,8 +26,6 @@
 #include <SFML/Window.hpp>
 #include <SFML/OpenGL.hpp>
 #include <SFML/Graphics.hpp>
-#include <GL/gl.h>
-#include <GL/glu.h>
 #include <string>
 
 namespace ltbl

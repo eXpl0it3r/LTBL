@@ -26,21 +26,12 @@
 #include "Constructs.h"
 #include "QuadTree.h"
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 namespace ltbl
 {
-	const float lightSubdivisionSize = static_cast<float>(M_PI) / 24.0f;
-
-	class LightSystem;
-
 	class Light :
 		public qdt::QuadTreeOccupant
 	{
 	private:
-		int numSubdivisions;
-
 		sf::RenderTexture* pStaticTexture;
 
 		bool alwaysUpdate;
@@ -52,17 +43,21 @@ namespace ltbl
 
 		bool updateRequired;
 
-	public:
-		float radius;
-		Vec2f center;
-		float directionAngle;
-		float spreadAngle;
+	protected:
+		class LightSystem* pLightSystem;
 
+		// Set to false in base classes in order to avoid shader attenuation
+		bool shaderAttenuation;
+
+	public:
+		Vec2f center;
 		float intensity;
-		
+		float radius;
 		float size;
-		
-		float softSpreadAngle;
+
+		// If using light autenuation shader
+		float bleed;
+		float linearizeFactor;
 
 		Color3f color;
 
@@ -77,23 +72,15 @@ namespace ltbl
 		void IncCenter(Vec2f increment);
 		Vec2f GetCenter();
 
-		void SetDirectionAngle(float DirectionAngle);
-		void IncDirectionAngle(float increment);
-		float GetDirectionAngle();
-
-		void SetSpreadAngle(float SpreadAngle);
-		void IncSpreadAngle(float increment);
-		float GetSpreadAngle();
-
-		virtual void RenderLightSolidPortion(float depth);
-		virtual void RenderLightSoftPortion(float depth);
+		virtual void RenderLightSolidPortion(float depth) = 0;
+		virtual void RenderLightSoftPortion(float depth) = 0;
 		virtual void CalculateAABB();
 		AABB* GetAABB();
 
 		bool AlwaysUpdate();
 		void SetAlwaysUpdate(bool always);
 
-		friend LightSystem;
+		friend class LightSystem;
 	};
 }
 

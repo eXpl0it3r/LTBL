@@ -30,14 +30,14 @@ using namespace qdt;
 
 LightSystem::LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow)
 	: ambientColor(55, 55, 55), checkForHullIntersect(true),
-	prebuildTimer(0), pWin(pRenderWindow)
+	prebuildTimer(0), pWin(pRenderWindow), useBloom(true)
 {
-	view.SetCenter(sf::Vector2f(0.0f, 0.0f));
-	view.SetSize(sf::Vector2f(static_cast<float>(pRenderWindow->GetWidth()), static_cast<float>(pRenderWindow->GetHeight())));
-
 	// Load the soft shadows texture
 	if(!softShadowTexture.LoadFromFile("data/softShadowsTexture.png"))
 		abort(); // Could not find the texture, abort
+
+	if(!lightAttenuationShader.LoadFromFile("data/shaders/lightAttenuationShader.frag", sf::Shader::Fragment))
+		abort();
 
 	SetUp(region);
 }
@@ -50,20 +50,30 @@ LightSystem::~LightSystem()
 	ClearEmissiveLights();
 }
 
+void LightSystem::SetView(const sf::View &view)
+{
+	sf::Vector2f viewSize(view.GetSize());
+	viewAABB.SetDims(Vec2f(viewSize.x, viewSize.y));
+	sf::Vector2f viewCenter(view.GetCenter());
+
+	// Flipped
+	viewAABB.SetCenter(Vec2f(viewCenter.x, viewSize.y - viewCenter.y));
+}
+
 void LightSystem::CameraSetup()
 {
-	sf::Vector2f viewCenter = view.GetCenter();
-	glTranslatef(-viewCenter.x, -viewCenter.y, 0.0f);
+	glLoadIdentity();
+	//glTranslatef(-viewAABB.lowerBound.x, -viewAABB.lowerBound.y, 0.0f);
 }
 
 void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 {
 	// ----------------------------- Determine the Shadow Boundaries -----------------------------
 
-	Vec2f lCenter = light->center;
+	Vec2f lCenter(light->center);
 	float lRadius = light->radius;
 
-	Vec2f hCenter = convexHull->GetWorldCenter();
+	Vec2f hCenter(convexHull->GetWorldCenter());
 
 	const int numVertices = convexHull->vertices.size();
 
@@ -74,19 +84,19 @@ void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 		Vec2f firstVertex(convexHull->GetWorldVertex(i));
         int secondIndex = (i + 1) % numVertices;
         Vec2f secondVertex(convexHull->GetWorldVertex(secondIndex));
-        Vec2f middle = (firstVertex + secondVertex) / 2.0f;
+        Vec2f middle((firstVertex + secondVertex) / 2.0f);
 
 		// Use normal to take light width into account, this eliminates popping
 		Vec2f lightNormal(-(lCenter.y - middle.y), lCenter.x - middle.x);
 
-		Vec2f centerToBoundry = middle - hCenter;
+		Vec2f centerToBoundry(middle - hCenter);
 
 		if(centerToBoundry.dot(lightNormal) < 0)
 			lightNormal *= -1;
 
 		lightNormal = lightNormal.normalize() * light->size;
 
-		Vec2f L = (lCenter - lightNormal) - middle;
+		Vec2f L((lCenter - lightNormal) - middle);
                 
 		if (convexHull->normals[i].dot(L) > 0)
             backFacing[i] = false;
@@ -110,11 +120,11 @@ void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 
 	// -------------------------------- Shadow Fins --------------------------------
 
-	Vec2f firstBoundryPoint = convexHull->GetWorldVertex(firstBoundryIndex);
+	Vec2f firstBoundryPoint(convexHull->GetWorldVertex(firstBoundryIndex));
 
 	Vec2f lightNormal(-(lCenter.y - firstBoundryPoint.y), lCenter.x - firstBoundryPoint.x);
 
-	Vec2f centerToBoundry = firstBoundryPoint - hCenter;
+	Vec2f centerToBoundry(firstBoundryPoint - hCenter);
 
 	if(centerToBoundry.dot(lightNormal) < 0)
 		lightNormal *= -1;
@@ -134,7 +144,9 @@ void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 
 	Vec2f secondBoundryPoint = convexHull->GetWorldVertex(secondBoundryIndex);
 
-	lightNormal = Vec2f(-(lCenter.y - secondBoundryPoint.y), lCenter.x - secondBoundryPoint.x);
+	lightNormal.x = -(lCenter.y - secondBoundryPoint.y);
+	lightNormal.y = lCenter.x - secondBoundryPoint.x;
+
 	centerToBoundry = secondBoundryPoint - hCenter;
 
 	if(centerToBoundry.dot(lightNormal) < 0)
@@ -153,20 +165,20 @@ void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 	finsToRender.push_back(firstFin);
 	finsToRender.push_back(secondFin);
 
-	Vec2f mainUmbraRoot1 = firstFin.rootPos;
-	Vec2f mainUmbraRoot2 = secondFin.rootPos;
-	Vec2f mainUmbraVec1 = firstFin.umbra;
-	Vec2f mainUmbraVec2 = secondFin.umbra;
+	Vec2f mainUmbraRoot1(firstFin.rootPos);
+	Vec2f mainUmbraRoot2(secondFin.rootPos);
+	Vec2f mainUmbraVec1(firstFin.umbra);
+	Vec2f mainUmbraVec2(secondFin.umbra);
 
 	AddExtraFins(*convexHull, &firstFin, *light, mainUmbraVec1, mainUmbraRoot1, firstBoundryIndex, false);
 	AddExtraFins(*convexHull, &secondFin, *light, mainUmbraVec2, mainUmbraRoot2, secondBoundryIndex, true);
 	
 	// ----------------------------- Drawing the umbra -----------------------------
 
-	Vec2f vertex1 = convexHull->GetWorldVertex(firstBoundryIndex);
-	Vec2f vertex2 = convexHull->GetWorldVertex(secondBoundryIndex);
+	Vec2f vertex1(convexHull->GetWorldVertex(firstBoundryIndex));
+	Vec2f vertex2(convexHull->GetWorldVertex(secondBoundryIndex));
 
-	Vec2f throughCenter = (hCenter - lCenter).normalize() * lRadius;
+	Vec2f throughCenter((hCenter - lCenter).normalize() * lRadius);
 
 	// 3 rays is enough in most cases
 	glBegin(GL_TRIANGLE_STRIP);
@@ -183,7 +195,7 @@ void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, float depth)
 
 void LightSystem::AddExtraFins(const ConvexHull &hull, ShadowFin* fin, const Light &light, Vec2f &mainUmbra, Vec2f &mainUmbraRoot, int boundryIndex, bool wrapCW)
 {
-	Vec2f hCenter = hull.GetWorldCenter();
+	Vec2f hCenter(hull.GetWorldCenter());
 
 	int secondEdgeIndex;
 	int numVertices = static_cast<signed>(hull.vertices.size());
@@ -195,7 +207,7 @@ void LightSystem::AddExtraFins(const ConvexHull &hull, ShadowFin* fin, const Lig
 		else
 			secondEdgeIndex = Wrap(boundryIndex + 1, numVertices);
 
-		Vec2f edgeVec = Vec2f(hull.vertices[secondEdgeIndex].position - hull.vertices[boundryIndex].position).normalize();
+		Vec2f edgeVec((hull.vertices[secondEdgeIndex].position - hull.vertices[boundryIndex].position).normalize());
 
 		Vec2f penNorm(fin->penumbra.normalize());
 
@@ -209,11 +221,11 @@ void LightSystem::AddExtraFins(const ConvexHull &hull, ShadowFin* fin, const Lig
 		fin->umbra = edgeVec * light.radius;
 
 		// Add the extra fin
-		Vec2f secondBoundryPoint = hull.GetWorldVertex(secondEdgeIndex);
+		Vec2f secondBoundryPoint(hull.GetWorldVertex(secondEdgeIndex));
 
 		Vec2f lightNormal(-(light.center.y - secondBoundryPoint.y), light.center.x - secondBoundryPoint.x);
 
-		Vec2f centerToBoundry = secondBoundryPoint - hCenter;
+		Vec2f centerToBoundry(secondBoundryPoint - hCenter);
 
 		if(centerToBoundry.dot(lightNormal) < 0)
 			lightNormal *= -1;
@@ -248,13 +260,16 @@ void LightSystem::SetUp(const AABB &region)
 	hullTree.reset(new QuadTree(region));
 	emissiveTree.reset(new QuadTree(region));
 
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+	// Base RT size off of window resolution
+	sf::Vector2u viewSizeui(pWin->GetWidth(), pWin->GetHeight());
 
 	renderTexture.Create(viewSizeui.x, viewSizeui.y, false);
 	renderTexture.SetSmooth(true);
 
-	lightTemp.Create(viewSizeui.x, viewSizeui.y, true);
+	bloomTexture.Create(viewSizeui.x, viewSizeui.y, false);
+	bloomTexture.SetSmooth(true);
+
+	lightTemp.Create(viewSizeui.x, viewSizeui.y, false);
 	lightTemp.SetSmooth(true);
 
 	InitGlew();
@@ -270,6 +285,7 @@ void LightSystem::SetUp(const AABB &region)
 void LightSystem::AddLight(Light* newLight)
 {
 	newLight->pWin = pWin;
+	newLight->pLightSystem = this;
 	lights.insert(newLight);
 	lightTree->AddOccupant(newLight);
 }
@@ -363,41 +379,47 @@ void LightSystem::ClearEmissiveLights()
 
 void LightSystem::SwitchLightTemp()
 {
-	lightTemp.SetActive();
+	if(currentRenderTexture != cur_lightTemp)
+	{
+		lightTemp.SetActive();
 
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+		//if(currentRenderTexture == cur_lightStatic)
+			SwitchWindowProjection();
 
-	glViewport(0, 0, viewSizeui.x, viewSizeui.y);
+		currentRenderTexture = cur_lightTemp;
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	// Flip the projection, since SFML draws the bound textures (on the FBO) upside down
-	glOrtho(0, viewSizeui.x, viewSizeui.y, 0, -100.0f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
-	glClearDepth(1.0f);
+		CameraSetup();
+	}
 }
 
 void LightSystem::SwitchMain()
 {
-	renderTexture.SetActive();
+	if(currentRenderTexture != cur_main)
+	{
+		renderTexture.SetActive();
 
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+		if(currentRenderTexture == cur_lightStatic)
+			SwitchWindowProjection();
 
-	glViewport(0, 0, viewSizeui.x, viewSizeui.y);
+		currentRenderTexture = cur_main;
 
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, viewSizeui.x, 0, viewSizeui.y, -100.0f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+		CameraSetup();
+	}
+}
 
-	glDisable(GL_DEPTH_TEST);
+void LightSystem::SwitchBloom()
+{
+	if(currentRenderTexture != cur_bloom)
+	{
+		bloomTexture.SetActive();
+
+		if(currentRenderTexture == cur_lightStatic)
+			SwitchWindowProjection();
+
+		currentRenderTexture = cur_bloom;
+
+		CameraSetup();
+	}
 }
 
 void LightSystem::SwitchWindow()
@@ -405,13 +427,54 @@ void LightSystem::SwitchWindow()
 	pWin->ResetGLStates();
 }
 
+void LightSystem::SwitchWindowProjection()
+{
+	Vec2f viewSize(viewAABB.GetDims());
+	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+
+	glViewport(0, 0, viewSizeui.x, viewSizeui.y);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	// Upside-down, because SFML is pro like that
+	glOrtho(0, viewSize.x, 0, viewSize.y, -100.0f, 100.0f);
+	glMatrixMode(GL_MODELVIEW);
+}
+
 void LightSystem::RenderLights()
 {
-	sf::Vector2f viewCenter(view.GetCenter());
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(viewSize);
+	// So will switch to main render textures from SFML projection
+	currentRenderTexture = cur_lightStatic;
 
-	// Bind the main render texture on to which the scene is composed
+	Vec2f viewCenter(viewAABB.GetCenter());
+	Vec2f viewSize(viewAABB.GetDims());
+
+	if(useBloom)
+	{
+		// Clear the bloom texture
+		SwitchBloom();
+
+		glDisable(GL_TEXTURE_2D);
+
+		bloomTexture.Clear(sf::Color::Transparent);
+	
+		glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
+
+		glBlendFunc(GL_ONE, GL_ZERO);
+
+		// Clear with quad, since glClear is not working for some reason... if results in very ugly artifacts
+		glBegin(GL_QUADS);
+			glVertex3f(0.0f, 0.0f, 0.0f);
+			glVertex3f(viewSize.x, 0.0f, 0.0f);
+			glVertex3f(viewSize.x, viewSize.y, 0.0f);
+			glVertex3f(0.0f, viewSize.y, 0.0f);
+		glEnd();
+
+		glEnable(GL_TEXTURE_2D);
+
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	}
+
 	SwitchMain();
 
 	glDisable(GL_TEXTURE_2D);
@@ -437,11 +500,8 @@ void LightSystem::RenderLights()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// Get visible lights
-	AABB view(Vec2f(viewCenter.x, viewCenter.y),
-		Vec2f(viewSize.x + viewCenter.x, viewSize.y + viewCenter.y));
-
-	std::vector<QuadTreeOccupant*> visibleLights;
-	lightTree->Query(view, visibleLights);
+	std::vector<qdt::QuadTreeOccupant*> visibleLights;
+	lightTree->Query(viewAABB, visibleLights);
 
 	// Add lights from pre build list if there are any
 	if(!lightsToPreBuild.empty())
@@ -509,12 +569,11 @@ void LightSystem::RenderLights()
 			if(pLight->AlwaysUpdate())
 			{
 				SwitchLightTemp();
-				CameraSetup();
 				
-				lightTemp.Clear();
+				lightTemp.Clear(sf::Color::Transparent);
 
 				// Clear with quad, since glClear is not working for some reason... if results in very ugly artifacts. MUST clear with full color, with alpha!
-				//glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Not needed, since already this color
+				glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 
 				float lightTempWidth = static_cast<float>(lightTemp.GetWidth());
 				float lightTempHeight = static_cast<float>(lightTemp.GetHeight());
@@ -527,15 +586,19 @@ void LightSystem::RenderLights()
 					glVertex3f(lightTempWidth, lightTempHeight, 0.0f);
 					glVertex3f(0.0f, lightTempHeight, 0.0f);
 				glEnd();
+
+				// Reset color
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			}
 			else
 			{
 				pLight->SwitchStaticTexture();
+				currentRenderTexture = cur_lightStatic;
 
-				pLight->pStaticTexture->Clear();
+				pLight->pStaticTexture->Clear(sf::Color::Transparent);
 				
-				// Clear with quad, since glClear is not working for some reason... if results in very ugly artifacts. MUST clear with full color, with alpha!
-				//glColor4f(1.0f, 1.0f, 1.0f, 1.0f); // Not needed, since already this color
+				// Clear with quad, since glClear is not working for some reason... it results in very ugly artifacts. MUST clear with full color, with alpha!
+				glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 
 				float staticRenTexWidth = static_cast<float>(pLight->pStaticTexture->GetWidth());
 				float staticRenTexHeight =  static_cast<float>(pLight->pStaticTexture->GetHeight());
@@ -549,23 +612,46 @@ void LightSystem::RenderLights()
 					glVertex3f(0.0f, staticRenTexHeight, 0.0f);
 				glEnd();
 
+				// Reset color
+				glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
 				staticTextureOffset = pLight->aabb.GetDims() / 2.0f;
 
 				glLoadIdentity();
 				glTranslatef(-pLight->aabb.lowerBound.x, -pLight->aabb.lowerBound.y, 0.0f);
 			}
 
-			// About to use depth buffer...
-			glClear(GL_DEPTH_BUFFER_BIT);
+			if(pLight->shaderAttenuation)
+			{
+				lightAttenuationShader.Bind();
 
+				if(pLight->AlwaysUpdate())
+					lightAttenuationShader.SetParameter("lightPos", pLight->center.x, pLight->center.y);
+				else
+					lightAttenuationShader.SetParameter("lightPos", pLight->center.x - pLight->aabb.lowerBound.x, pLight->center.y - pLight->aabb.lowerBound.y);
+
+				lightAttenuationShader.SetParameter("lightColor", pLight->color.r, pLight->color.g, pLight->color.b);
+				lightAttenuationShader.SetParameter("radius", pLight->radius);
+				lightAttenuationShader.SetParameter("bleed", pLight->bleed);
+				lightAttenuationShader.SetParameter("linearizeFactor", pLight->linearizeFactor);
+
+				// Render the current light
+				pLight->RenderLightSolidPortion(1.0f);
+
+				lightAttenuationShader.Unbind();
+			}
+			else
+				// Render the current light
+				pLight->RenderLightSolidPortion(1.0f);
+
+			// Mask off lights
 			glBlendFunc(GL_ONE, GL_ZERO);
 
-			glEnable(GL_DEPTH_TEST);
 			glDisable(GL_TEXTURE_2D);
 			glDisable(GL_BLEND);
 
-			// Disable color and alpha buffer writes temporarily for masking
-			glColorMask(false, false, false, false);
+			// Color black
+			glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
 
 			if(checkForHullIntersect)
 				for(unsigned int h = 0; h < numHulls; h++)
@@ -587,37 +673,29 @@ void LightSystem::RenderLights()
 			for(unsigned int h = 0; h < numHulls; h++)
 				static_cast<ConvexHull*>(regionHulls[h])->RenderHull(2.0f);
 
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
-
-			// Re-enable color buffer and alpha buffer writes
-			glColorMask(true, true, true, true);
-
-			// Render the current light
-			pLight->RenderLightSolidPortion(1.0f);
-
 			// Color reset
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_ONE, GL_ONE);
 
 			// Render shadow fins, multiply alpha
 			glEnable(GL_TEXTURE_2D);
 
 			softShadowTexture.Bind();
 
-			glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+			glBlendFuncSeparate(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);
 
 			const unsigned int numFins = finsToRender.size();
 
 			for(unsigned int f = 0; f < numFins; f++)
-				finsToRender[f].Render(1.0f);
+				finsToRender[f].Render(0.0f);
 
-			// Soft light angle fins
-			pLight->RenderLightSoftPortion(1.0f);
+			// Soft light angle fins (additional masking)
+			pLight->RenderLightSoftPortion(0.0f);
 
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-			glClear(GL_DEPTH_BUFFER_BIT);
 
 			// Now render that intermediate render Texture to the main render Texture
 			if(pLight->AlwaysUpdate())
@@ -628,23 +706,40 @@ void LightSystem::RenderLights()
 
 				lightTemp.GetTexture().Bind();
 
-				glDisable(GL_DEPTH_TEST);
-
-				// Save the camera matrix
-				glPushMatrix();
-
 				glLoadIdentity();
 
 				glBlendFunc(GL_ONE, GL_ONE);
 
+				// Texture is upside-down for some reason, so draw flipped
 				glBegin(GL_QUADS);
-					glTexCoord2i(0, 0); glVertex3f(0.0f, 0.0f, 0.0f);
-					glTexCoord2i(1, 0); glVertex3f(viewSize.x, 0.0f, 0.0f);
-					glTexCoord2i(1, 1); glVertex3f(viewSize.x, viewSize.y, 0.0f);
-					glTexCoord2i(0, 1); glVertex3f(0.0f, viewSize.y, 0.0f);
+					glTexCoord2i(0, 1); glVertex3f(0.0f, 0.0f, 0.0f);
+					glTexCoord2i(1, 1); glVertex3f(viewSize.x, 0.0f, 0.0f);
+					glTexCoord2i(1, 0); glVertex3f(viewSize.x, viewSize.y, 0.0f);
+					glTexCoord2i(0, 0); glVertex3f(0.0f, viewSize.y, 0.0f);
 				glEnd();
 
-				glPopMatrix();
+				// Bloom render
+				if(useBloom && pLight->intensity > 1.0f)
+				{
+					SwitchBloom();
+
+					glLoadIdentity();
+
+					lightTemp.GetTexture().Bind();
+
+					glBlendFunc(GL_ONE, GL_ONE);
+	
+					// Bloom amount
+					glColor4f(1.0f, 1.0f, 1.0f, pLight->intensity - 1.0f);
+
+					// Texture is upside-down for some reason, so draw flipped
+					glBegin(GL_QUADS);
+						glTexCoord2i(0, 1); glVertex3f(0.0f, 0.0f, 0.0f);
+						glTexCoord2i(1, 1); glVertex3f(viewSize.x, 0.0f, 0.0f);
+						glTexCoord2i(1, 0); glVertex3f(viewSize.x, viewSize.y, 0.0f);
+						glTexCoord2i(0, 0); glVertex3f(0.0f, viewSize.y, 0.0f);
+					glEnd();
+				}
 			}
 			else
 			{
@@ -654,13 +749,9 @@ void LightSystem::RenderLights()
 
 				pLight->pStaticTexture->GetTexture().Bind();
 
-				glPushMatrix();
-
-				CameraSetup();
 				glTranslatef(pLight->center.x - staticTextureOffset.x, pLight->center.y - staticTextureOffset.y, 0.0f);
 
 				glBlendFunc(GL_ONE, GL_ONE);
-				glDisable(GL_DEPTH_TEST);
 
 				const float lightStaticTextureWidth = static_cast<float>(pLight->pStaticTexture->GetWidth());
 				const float lightStaticTextureHeight = static_cast<float>(pLight->pStaticTexture->GetHeight());
@@ -672,7 +763,27 @@ void LightSystem::RenderLights()
 					glTexCoord2i(0, 1); glVertex3f(0.0f, lightStaticTextureHeight, 0.0f);
 				glEnd();
 
-				glPopMatrix();
+				// Bloom render
+				if(useBloom && pLight->intensity > 1.0f)
+				{
+					SwitchBloom();
+
+					glTranslatef(pLight->center.x - staticTextureOffset.x, pLight->center.y - staticTextureOffset.y, 0.0f);
+
+					pLight->pStaticTexture->GetTexture().Bind();
+
+					glBlendFunc(GL_ONE, GL_ONE);
+	
+					// Bloom amount
+					glColor4f(1.0f, 1.0f, 1.0f, pLight->intensity - 1.0f);
+
+					glBegin(GL_QUADS);
+						glTexCoord2i(0, 0); glVertex3f(0.0f, 0.0f, 0.0f);
+						glTexCoord2i(1, 0); glVertex3f(lightStaticTextureWidth, 0.0f, 0.0f);
+						glTexCoord2i(1, 1); glVertex3f(lightStaticTextureWidth, lightStaticTextureHeight, 0.0f);
+						glTexCoord2i(0, 1); glVertex3f(0.0f, lightStaticTextureHeight, 0.0f);
+					glEnd();
+				}
 			}
 
 			pLight->updateRequired = false;
@@ -684,13 +795,9 @@ void LightSystem::RenderLights()
 
 			Vec2f staticTextureOffset = pLight->center - pLight->aabb.lowerBound;
 
-			glPushMatrix();
-
-			CameraSetup();
 			glTranslatef(pLight->center.x - staticTextureOffset.x, pLight->center.y - staticTextureOffset.y, 0.0f);
 
 			glBlendFunc(GL_ONE, GL_ONE);
-			glDisable(GL_DEPTH_TEST);
 
 			const float lightStaticTextureWidth = static_cast<float>(pLight->pStaticTexture->GetWidth());
 			const float lightStaticTextureHeight = static_cast<float>(pLight->pStaticTexture->GetHeight());
@@ -702,27 +809,56 @@ void LightSystem::RenderLights()
 				glTexCoord2i(0, 1); glVertex3f(0.0f, lightStaticTextureHeight, 0.0f);
 			glEnd();
 
-			glPopMatrix();
+			// Bloom render
+			if(useBloom && pLight->intensity > 1.0f)
+			{
+				SwitchBloom();
+
+				glTranslatef(pLight->center.x - staticTextureOffset.x, pLight->center.y - staticTextureOffset.y, 0.0f);
+
+				pLight->pStaticTexture->GetTexture().Bind();
+
+				glBlendFunc(GL_ONE, GL_ONE);
+	
+				// Bloom amount
+				glColor4f(1.0f, 1.0f, 1.0f, pLight->intensity - 1.0f);
+
+				glBegin(GL_QUADS);
+					glTexCoord2i(0, 0); glVertex3f(0.0f, 0.0f, 0.0f);
+					glTexCoord2i(1, 0); glVertex3f(lightStaticTextureWidth, 0.0f, 0.0f);
+					glTexCoord2i(1, 1); glVertex3f(lightStaticTextureWidth, lightStaticTextureHeight, 0.0f);
+					glTexCoord2i(0, 1); glVertex3f(0.0f, lightStaticTextureHeight, 0.0f);
+				glEnd();
+			}
 		}
 
 		regionHulls.clear();
 		finsToRender.clear();
 	}
 
-	glLoadIdentity();
-	CameraSetup();
-
 	// Emissive lights
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	std::vector<QuadTreeOccupant*> visibleEmissiveLights;
-
-	emissiveTree->Query(view, visibleEmissiveLights);
+	std::vector<qdt::QuadTreeOccupant*> visibleEmissiveLights;
+	emissiveTree->Query(viewAABB, visibleEmissiveLights);
 
 	const unsigned int numEmissiveLights = visibleEmissiveLights.size();
 
 	for(unsigned int i = 0; i < numEmissiveLights; i++)
-		static_cast<EmissiveLight*>(visibleEmissiveLights[i])->Render();
+	{
+		EmissiveLight* pEmissive = static_cast<EmissiveLight*>(visibleEmissiveLights[i]);
+
+		if(useBloom && pEmissive->intensity > 1.0f)
+		{
+			SwitchBloom();
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			pEmissive->Render();
+		}
+		else
+		{
+			SwitchMain();
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			pEmissive->Render();
+		}
+	}
 
 	renderTexture.Display();
 
@@ -736,8 +872,9 @@ void LightSystem::BuildLight(Light* pLight)
 
 void LightSystem::RenderLightTexture(float renderDepth)
 {
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+	Vec2f viewSize(viewAABB.GetDims());
+
+	glLoadIdentity();
 
 	renderTexture.GetTexture().Bind();
 
@@ -751,22 +888,31 @@ void LightSystem::RenderLightTexture(float renderDepth)
 		glTexCoord2i(0, 1); glVertex3f(0.0f, viewSize.y, renderDepth);
 	glEnd();
 
+	if(useBloom)
+	{
+		bloomTexture.GetTexture().Bind();
+
+		glBlendFunc(GL_ONE, GL_ONE);
+
+		glBegin(GL_QUADS);
+			glTexCoord2i(0, 0); glVertex3f(0.0f, 0.0f, renderDepth);
+			glTexCoord2i(1, 0); glVertex3f(viewSize.x, 0.0f, renderDepth);
+			glTexCoord2i(1, 1); glVertex3f(viewSize.x, viewSize.y, renderDepth);
+			glTexCoord2i(0, 1); glVertex3f(0.0f, viewSize.y, renderDepth);
+		glEnd();
+	}
+
 	// Reset blend function
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	pWin->ResetGLStates();
 }
 
 void LightSystem::DebugRender()
 {
 	// Set to a more useful-for-OpenGL projection
-	sf::Vector2f viewSize(view.GetSize());
-	sf::Vector2u viewSizeui(static_cast<unsigned int>(viewSize.x), static_cast<unsigned int>(viewSize.y));
+	Vec2f viewSize(viewAABB.GetDims());
 
-	glViewport(0, 0, viewSizeui.x, viewSizeui.y);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(0, viewSizeui.x, 0, viewSizeui.y, -100.0f, 100.0f);
-	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	CameraSetup();
