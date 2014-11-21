@@ -21,8 +21,6 @@
 
 #include <LTBL/Light/EmissiveLight.h>
 
-
-#define _USE_MATH_DEFINES
 #include <math.h>
 
 using namespace ltbl;
@@ -124,7 +122,7 @@ void EmissiveLight::SetRotation(float angle)
 		return;
 
 	// Get angle in radians
-	float angleRads = m_angleDegs * (static_cast<float>(M_PI) / 180.0f);
+	float angleRads = m_angleDegs * (static_cast<float>(PI) / 180.0f);
 
 	// Rotate the aabb
 	m_aabb.SetRotatedAABB(angleRads);
@@ -138,7 +136,7 @@ void EmissiveLight::IncRotation(float increment)
 	m_angleDegs += increment;
 
 	// Get angle increment in radians
-	float incrementRads = increment * (static_cast<float>(M_PI) / 180.0f);
+	float incrementRads = increment * (static_cast<float>(PI) / 180.0f);
 
 	// Rotate the aabb without setting to original aabb, so rotation is relative
 	m_aabb.SetRotatedAABB(incrementRads);
