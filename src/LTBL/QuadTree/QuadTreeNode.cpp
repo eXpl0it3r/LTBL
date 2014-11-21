@@ -256,6 +256,8 @@ namespace qdt
 
 				break;
 			}
+
+			pNode = pNode->m_pParent;
 		}
 	}
 
