@@ -49,7 +49,8 @@ int main(int argc, char* args[])
 
 	sf::Texture backgroundImage;
 
-	assert(backgroundImage.loadFromFile("data/background.png"));
+	if(!backgroundImage.loadFromFile("data/background.png"))
+        std::abort();
 
 	// Tiling background
 	backgroundImage.setRepeated(true);
@@ -155,10 +156,10 @@ int main(int argc, char* args[])
 		else if(sf::Keyboard::isKeyPressed(sf::Keyboard::S))
 			view.move(sf::Vector2f(0.0f, 1.0f));
 
-		sf::Vector2i mousePos = sf::Mouse::getPosition(win);
+		sf::Vector2f mousePos = win.mapPixelToCoords(sf::Mouse::getPosition(win));
 		//testLight2->IncCenter(ltbl::Vec2f(0.1f, 0.0f));
 		// Update light
-		testLight->SetCenter(Vec2f(static_cast<float>(mousePos.x), static_cast<float>(vidMode.height) - static_cast<float>(mousePos.y)));
+		testLight->SetCenter(Vec2f(mousePos.x, static_cast<float>(vidMode.height) - mousePos.y));
 
 		win.clear();
 
