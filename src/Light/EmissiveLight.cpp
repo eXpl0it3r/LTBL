@@ -55,7 +55,7 @@ void EmissiveLight::Render()
 
 	const Vec2f &center = m_aabb.GetCenter();
 
-	m_texture->bind();
+	sf::Texture::bind(m_texture);
 
 	glTranslatef(center.x, center.y, 0.0f);
 	glRotatef(m_angleDegs, 0.0f, 0.0f, 1.0f);

@@ -5,6 +5,8 @@
 
 #include <SFML/OpenGL.hpp>
 
+#include <list>
+
 namespace qdt
 {
 	void QuadTree::OnRemoval()

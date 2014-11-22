@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_set>
 #include <memory>
+#include <list>
 
 namespace qdt
 {
