@@ -1,6 +1,6 @@
 #include <LTBL/QuadTree/StaticQuadTree.h>
 
-#include <assert.h>
+#include <cassert>
 
 namespace qdt
 {

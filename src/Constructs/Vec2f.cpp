@@ -1,6 +1,6 @@
 #include <LTBL/Constructs/Vec2f.h>
 
-#include <math.h>
+#include <cmath>
 
 Vec2f::Vec2f() 
 {
@@ -79,7 +79,7 @@ const Vec2f &Vec2f::operator-=(const Vec2f &other)
 
 float Vec2f::Magnitude() const 
 {
-	return sqrt(x * x + y * y);
+	return std::sqrt(x * x + y * y);
 }
 
 float Vec2f::MagnitudeSquared() const 
@@ -89,7 +89,7 @@ float Vec2f::MagnitudeSquared() const
 
 Vec2f Vec2f::Normalize() const 
 {
-	float m = sqrt(x * x + y * y);
+	float m = std::sqrt(x * x + y * y);
 	return Vec2f(x / m, y / m);
 }
 

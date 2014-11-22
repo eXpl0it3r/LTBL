@@ -5,7 +5,7 @@
 
 #include <LTBL/Constructs/Vec2f.h>
 
-#include <assert.h>
+#include <cassert>
 
 namespace qdt
 {

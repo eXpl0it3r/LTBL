@@ -23,11 +23,11 @@
 #include <LTBL/Light/Light_Point.h>
 #include <LTBL/Utils.h>
 
-#include <assert.h>
-
 #include <SFML/Graphics.hpp>
 
 #include <sstream>
+#include <cassert>
+#include <cstdlib>
 
 int main(int argc, char* args[])
 { 
@@ -100,7 +100,7 @@ int main(int argc, char* args[])
 	sf::Texture text;
 
 	if(!text.loadFromFile("data/emissive.png"))
-		abort();
+		std::abort();
 
 	emissiveLight->SetTexture(&text);
 
@@ -116,7 +116,7 @@ int main(int argc, char* args[])
 	ltbl::ConvexHull* testHull = new ltbl::ConvexHull();
 
 	if(!testHull->LoadShape("data/testShape.txt"))
-		abort();
+		std::abort();
 
 	// Pre-calculate certain aspects
 	testHull->CalculateNormals();

@@ -2,6 +2,8 @@
 
 #include <SFML/OpenGL.hpp>
 
+#include <cmath>
+
 AABB::AABB()
 	: m_lowerBound(0.0f, 0.0f), m_upperBound(1.0f, 1.0f),
 	m_center(0.5f, 0.5f), m_halfDims(0.5f, 0.5f)
@@ -95,8 +97,8 @@ void AABB::SetHalfDims(const Vec2f &newDims)
 
 void AABB::SetRotatedAABB(float angleRads)
 {
-	float cosOfAngle = cosf(angleRads);
-	float sinOfAngle = sinf(angleRads);
+	float cosOfAngle = std::cos(angleRads);
+	float sinOfAngle = std::sin(angleRads);
 
 	m_halfDims.x = m_halfDims.y * sinOfAngle + m_halfDims.x * cosOfAngle;
 	m_halfDims.y = m_halfDims.x * sinOfAngle + m_halfDims.y * cosOfAngle;

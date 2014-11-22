@@ -2,7 +2,7 @@
 
 #include <LTBL/QuadTree/QuadTree.h>
 
-#include <assert.h>
+#include <cassert>
 
 namespace qdt
 {

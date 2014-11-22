@@ -1,7 +1,7 @@
 #ifndef LTBL_UTILS_H
 #define LTBL_UTILS_H
 
-#include <math.h>
+#include <cmath>
 
 #include <string>
 

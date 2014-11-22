@@ -24,7 +24,8 @@
 #include <LTBL/Light/ShadowFin.h>
 #include <LTBL/Utils.h>
 
-#include <assert.h>
+#include <cassert>
+#include <cstdlib>
 
 namespace ltbl
 {
@@ -40,10 +41,10 @@ namespace ltbl
 	{
 		// Load the soft shadows texture
 		if(!m_softShadowTexture.loadFromFile(finImagePath))
-			abort(); // Could not find the texture, abort
+			std::abort(); // Could not find the texture, abort
 
 		if(!m_lightAttenuationShader.loadFromFile(lightAttenuationShaderPath, sf::Shader::Fragment))
-			abort();
+			std::abort();
 
 		SetUp(region);
 	}
@@ -62,10 +63,10 @@ namespace ltbl
 
 		// Load the soft shadows texture
 		if(!m_softShadowTexture.loadFromFile(finImagePath))
-			abort(); // Could not find the texture, abort
+			std::abort(); // Could not find the texture, abort
 
 		if(!m_lightAttenuationShader.loadFromFile(lightAttenuationShaderPath, sf::Shader::Fragment))
-			abort();
+			std::abort();
 
 		SetUp(region);
 	}

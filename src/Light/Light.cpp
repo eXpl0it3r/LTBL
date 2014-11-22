@@ -21,7 +21,7 @@
 
 #include <LTBL/Light/Light.h>
 
-#include <assert.h>
+#include <cassert>
 
 namespace ltbl
 {

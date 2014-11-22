@@ -24,7 +24,7 @@
 
 #include <LTBL/Utils.h>
 
-#include <assert.h>
+#include <cassert>
 
 namespace ltbl
 {

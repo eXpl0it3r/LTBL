@@ -22,10 +22,10 @@
 #include <LTBL/Light/ConvexHull.h>
 #include <LTBL/Utils.h>
 
-#include <assert.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 namespace ltbl
 {

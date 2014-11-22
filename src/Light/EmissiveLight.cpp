@@ -21,7 +21,9 @@
 
 #include <LTBL/Light/EmissiveLight.h>
 
-#include <math.h>
+#include <LTBL/Utils.h>
+
+#include <cmath>
 
 using namespace ltbl;
 
