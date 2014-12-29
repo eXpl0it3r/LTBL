@@ -1,5 +1,7 @@
 # Let There Be Light
 
+**Checkout the new and official LTBL2:** https://github.com/222464/LTBL2
+
 [Let There Be Light](http://sourceforge.net/projects/letthebelight/) is a 2D dynamic soft shadows system that uses [SFML](http://www.sfml-dev.org/).
 
 ![LTBL](https://i.imgur.com/Xpx0PM1.jpg)
