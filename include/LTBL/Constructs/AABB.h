@@ -50,8 +50,6 @@ public:
 
 	// Render the AABB for debugging purposes
 	void DebugRender();
-
-	friend class AABB;
 };
 
 #endif
