@@ -1,11 +1,12 @@
 #include <LTBL/Utils.h>
 
+#include <cstdlib>
 #include <sstream>
 
 namespace ltbl
 {
 	float GetFloatVal(std::string strConvert)
 	{
-		return static_cast<float>(atof(strConvert.c_str()));
+		return static_cast<float>(std::atof(strConvert.c_str()));
 	}
 }
