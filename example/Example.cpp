@@ -29,11 +29,8 @@
 #include <cassert>
 #include <cstdlib>
 
-int main(int argc, char* args[])
+int main()
 { 
-	(void)argc;
-	(void)args;
-
 	sf::VideoMode vidMode;
 	vidMode.width = 800;
 	vidMode.height = 600;
