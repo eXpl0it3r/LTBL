@@ -29,7 +29,7 @@
 #include <cassert>
 #include <cstdlib>
 
-int main(int argc, char* args[])
+int main()
 { 
 	sf::VideoMode vidMode;
 	vidMode.width = 800;

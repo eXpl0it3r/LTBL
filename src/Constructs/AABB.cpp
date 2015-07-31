@@ -5,8 +5,8 @@
 #include <cmath>
 
 AABB::AABB()
-	: m_lowerBound(0.0f, 0.0f), m_upperBound(1.0f, 1.0f),
-	m_center(0.5f, 0.5f), m_halfDims(0.5f, 0.5f)
+    : m_center(0.5f, 0.5f), m_halfDims(0.5f, 0.5f),
+      m_lowerBound(0.0f, 0.0f), m_upperBound(1.0f, 1.0f)
 {
 }
 

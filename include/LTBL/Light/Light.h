@@ -65,7 +65,7 @@ namespace ltbl
 		Color3f m_color;
 
 		Light();
-		~Light();
+		virtual ~Light();
 
 		void SetRadius(float radius);
 		void IncRadius(float increment);

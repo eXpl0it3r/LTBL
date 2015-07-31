@@ -26,14 +26,19 @@
 namespace ltbl
 {
 	Light::Light()
-		: m_intensity(1.0f),
-		m_radius(100.0f),
+		: m_pStaticTexture(NULL), // For static light
+		m_alwaysUpdate(true),
+		m_pWin(NULL),
+		m_updateRequired(true),
+		m_pLightSystem(NULL),
+		m_shaderAttenuation(true),
 		m_center(0.0f, 0.0f),
-		m_color(1.0f, 1.0f, 1.0f),
+		m_intensity(1.0f),
+		m_radius(100.0f),
 		m_size(40.0f),
-		m_updateRequired(true), m_alwaysUpdate(true), m_pStaticTexture(NULL), // For static light
-		m_pWin(NULL), m_pLightSystem(NULL), m_shaderAttenuation(true),
-		m_bleed(1.0f), m_linearizeFactor(0.2f)
+		m_bleed(1.0f),
+		m_linearizeFactor(0.2f),
+		m_color(1.0f, 1.0f, 1.0f)
 	{
 	}
 
