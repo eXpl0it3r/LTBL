@@ -28,7 +28,7 @@
 using namespace ltbl;
 
 EmissiveLight::EmissiveLight()
-	: m_angleDegs(0.0f), m_color(1.0f, 1.0f, 1.0f), m_intensity(1.0f)
+	: m_angleDegs(0.0f), m_intensity(1.0f), m_color(1.0f, 1.0f, 1.0f)
 {
 }
 

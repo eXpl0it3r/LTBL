@@ -10,8 +10,8 @@
 namespace qdt
 {
 	QuadTreeOccupant::QuadTreeOccupant()
-		: m_aabb(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 1.0f)),
-		m_pQuadTreeNode(NULL), m_pQuadTree(NULL)
+		: m_pQuadTreeNode(NULL), m_pQuadTree(NULL),
+		  m_aabb(Vec2f(0.0f, 0.0f), Vec2f(1.0f, 1.0f))
 	{
 	}
 

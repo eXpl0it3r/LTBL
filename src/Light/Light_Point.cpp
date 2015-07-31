@@ -48,18 +48,14 @@ namespace ltbl
 
 		assert(renderIntensity >= 0.0f);
 
-		float r = m_color.r * m_intensity;
-		float g = m_color.g * m_intensity;
-		float b = m_color.b * m_intensity;
-
 		glBegin(GL_TRIANGLE_FAN);
 
 		glVertex2f(m_center.x, m_center.y);
-      
+	  
 		// Set the edge color for rest of shape
 		int numSubdivisions = static_cast<int>(m_spreadAngle / m_lightSubdivisionSize);
 		float startAngle = m_directionAngle - m_spreadAngle / 2.0f;
-      
+	  
 		for(int currentSubDivision = 0; currentSubDivision <= numSubdivisions; currentSubDivision++)
 		{
 			float angle = startAngle + currentSubDivision * m_lightSubdivisionSize;

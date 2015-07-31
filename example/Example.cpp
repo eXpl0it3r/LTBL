@@ -31,6 +31,9 @@
 
 int main(int argc, char* args[])
 { 
+	(void)argc;
+	(void)args;
+
 	sf::VideoMode vidMode;
 	vidMode.width = 800;
 	vidMode.height = 600;

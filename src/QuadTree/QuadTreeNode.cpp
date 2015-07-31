@@ -18,8 +18,8 @@ namespace qdt
 	}
 
 	QuadTreeNode::QuadTreeNode(const AABB &region, int level, QuadTreeNode* pParent, QuadTree* pQuadTree)
-		: m_region(region), m_level(level), m_pParent(pParent), m_pQuadTree(pQuadTree),
-		m_hasChildren(false), m_numOccupantsBelow(0)
+		:  m_pParent(pParent), m_pQuadTree(pQuadTree), m_hasChildren(false), m_region(region),
+		m_level(level), m_numOccupantsBelow(0)
 	{
 	}
 

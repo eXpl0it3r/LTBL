@@ -30,8 +30,8 @@
 namespace ltbl
 {
 	ConvexHull::ConvexHull()
-		: m_worldCenter(0.0f, 0.0f),
-		m_aabbCalculated(false),
+		: m_aabbCalculated(false),
+		m_worldCenter(0.0f, 0.0f),
 		m_updateRequired(true), // Remains true permanently unless user purposely changes it
 		m_transparency(1.0f),
 		m_renderLightOverHull(true)
@@ -93,7 +93,7 @@ namespace ltbl
 
 	Vec2f ConvexHull::GetWorldVertex(unsigned int index) const
 	{
-		assert(index >= 0 && index < m_vertices.size());
+		assert(index < m_vertices.size());
 		return Vec2f(m_vertices[index].x + m_worldCenter.x, m_vertices[index].y + m_worldCenter.y);
 	}
 

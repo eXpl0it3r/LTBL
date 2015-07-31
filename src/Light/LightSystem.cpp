@@ -30,14 +30,14 @@
 namespace ltbl
 {
 	LightSystem::LightSystem()
-		: m_ambientColor(55, 55, 55), m_checkForHullIntersect(true),
-		m_prebuildTimer(0), m_useBloom(true), m_maxFins(1)
+		: m_prebuildTimer(0), m_ambientColor(55, 55, 55),
+		m_checkForHullIntersect(true), m_useBloom(true), m_maxFins(1)
 	{
 	}
 
 	LightSystem::LightSystem(const AABB &region, sf::RenderWindow* pRenderWindow, const std::string &finImagePath, const std::string &lightAttenuationShaderPath)
-		: m_ambientColor(55, 55, 55), m_checkForHullIntersect(true),
-		m_prebuildTimer(0), m_pWin(pRenderWindow), m_useBloom(true), m_maxFins(1)
+		: m_pWin(pRenderWindow), m_prebuildTimer(0), m_ambientColor(55, 55, 55),
+		m_checkForHullIntersect(true), m_useBloom(true), m_maxFins(1)
 	{
 		// Load the soft shadows texture
 		if(!m_softShadowTexture.loadFromFile(finImagePath))
@@ -90,7 +90,7 @@ namespace ltbl
 	void LightSystem::MaskShadow(Light* light, ConvexHull* convexHull, bool minPoly, float depth)
 	{
 		// ----------------------------- Determine the Shadow Boundaries -----------------------------
-
+		(void)minPoly;
 		Vec2f lCenter(light->m_center);
 		float lRadius = light->m_radius;
 
@@ -118,7 +118,7 @@ namespace ltbl
 			lightNormal = lightNormal.Normalize() * light->m_size;
 
 			Vec2f L((lCenter - lightNormal) - middle);
-                
+
 			if (convexHull->m_normals[i].Dot(L) > 0)
 				backFacing[i] = false;
 			else
